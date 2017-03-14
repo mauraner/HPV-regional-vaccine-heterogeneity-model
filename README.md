@@ -11,11 +11,11 @@ cant_vacc_cov_pmob_ordered.csv <- cantonal/regional vaccination coverages
 weightsYA_pmob_ordered.csv     <- weight for each canton, according to its population size (18-24y.o men and women, www.BFS.ch      2013)
 pmob.csv                        <- population mobility matrix, received from the Swiss Federal Office for Spatial Development (ARE), represents the sum of commuters (average per day over one working week, 2010) between all pairs of cantons, by public transport and personal motorised vehicles)
 
-2. 
+2: 
 N_02_models.R
 Contains all function required to run the core script
 
-3.
+3:
 Core_script.R
 
 This script is sub-divided into three parts:
