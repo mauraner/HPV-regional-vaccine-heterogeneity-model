@@ -27,7 +27,7 @@
 k <- 1
 
 #run the parameters script and models over again
-source("N_01_params.R") # N_01_params runs the parameters of the model
+source("N_01_params_rev.R") # N_01_params runs the parameters of the model
 source("N_02_models.R") # N_02_models runs the two main SIRV models: STI_1 for scenario 1&2 and STI_2 for scenario 3
 
 # run the initial vector with the right size (right k)
@@ -36,6 +36,7 @@ init <- as.vector(matrix(unlist(inits(k)), ncol = k, byrow = TRUE))
 # p <- 0 # set vaccination to 0
 p <- mp
 
+# p <- p/2
 #simulation time
 time <- seq(0, 400, 1)
 
@@ -56,7 +57,7 @@ simulation_1k<- as.data.frame(ode(init, time, STI_1, parms=params))
 mat <- outp(simulation_1k, k)
 
 #prevalence after 200 years:
-mat[201,]
+mat[216,]
 
 
 #calculating R0
@@ -86,16 +87,18 @@ R0
 
 # this function gives the prevalence in a system with 1 canton/population, for women at the end of the simulation time
 # over the different beta. 
+p <- 0
+
 prev <- function(beta, C){
   prev_overb <- c()
   for (i in 1:length(beta)) {
-   params <- c( beta= beta[i], C=C)
-  y <- as.data.frame(lsoda(init, time, STI_1, parms=params))
+    params <- c( beta= beta[i], C=C)
+    y <- as.data.frame(lsoda(init, time, STI_1, parms=params))
     ########## total prev of HPV16 (LR group and HR group in women)
-  prev_overb[i] <-  y[,3][[length(time)]]+y[,7][[length(time)]]
+    prev_overb[i] <-  y[,3][[length(time)]]+y[,7][[length(time)]]
   }
   return(prev_overb)
-  }
+}
 
 #Make a vector to see how it behaves with different beta
 beta <- seq(0,1,0.05)
@@ -172,12 +175,12 @@ prev.pop<- function( time)
 
 # give required parameters (again)
 k <- 1
-source("N_01_params.R")
+source("N_01_params_rev.R")
 C <- C_ch
 
 mp <- NULL
 p <- NULL
-
+epsilon1 <- 1
 
 # number of years post-vaccination, given that vaccination starts at year 200
 time2y <- seq(0,202,1)
@@ -204,9 +207,9 @@ legend(0.6,1.55,legend=c("2 years", "4 years","10 years", "100 years"), col=c("p
        bty="n", cex=1)
 legend(0.3,1.7,legend="time after vaccination onset", col="black",bty="n", cex=1.25)
 
-lines(m2y[,2] ~ m2y[,3] ,  type= "l", col="purple", lwd=2, ylim=c(0,1), xlim=c(0,1))
+lines(m2y[,2] ~ m2y[,3] ,  type= "l", col="purple", lwd=1, ylim=c(0,1), xlim=c(0,1))
 
-lines(m4y[,2] ~ m4y[,3] , type = 'l',  col="black", lwd=2, ylim=c(0,1), xlim=c(0,1))
+lines(m4y[,2] ~ m4y[,3] , type = 'l',  col="black", lwd=1, ylim=c(0,1), xlim=c(0,1))
 # lines(m5y[,2] ~ m5y[,3] , type = 'l',  col="black", lwd=0.5, ylim=c(0,1), xlim=c(0,1))
 
 lines(m10y[,2] ~ m10y[,3] ,  type= "l", col="grey", lwd=1, ylim=c(0,1), xlim=c(0,1))
@@ -231,18 +234,20 @@ lines(m100y[,2] ~ m100y[,3] ,  type= "l", col="blue", lwd=1, ylim=c(0,1), xlim=c
 ### - 2.a & b & c: cantons with different vaccination coverages, fully assortative.
 ######
 
+# or use fig3_ext to run on UBELIX
+
 # set number of cantons
 k <- 2
 
 #run the parameters script and models over again
-source("N_01_params.R") # N_01_params runs the parameters of the model
+source("N_01_params_rev.R") # N_01_params runs the parameters of the model
 source("N_02_models.R") # N_02_models runs the two main SIRV models: STI_1 for scenario 1&2 and STI_2 for scenario 3
 
 # run the initial vector with the right size (right k)
 init <- as.vector(matrix(unlist(inits(k)), ncol = k, byrow = TRUE))
 
 #simulation time (here 50y after vaccination onset)
-time <- seq(0, 250, 1)
+time <- seq(0, 350, 1)
 
 # choose the source for number of sexual contacts (UK or CH), here CH
 C <- C_ch
@@ -250,8 +255,8 @@ C <- C_ch
 p <- NULL
 
 #Choose the different vaccination coverages you want for each cantons
-p1 <- seq(0.0,1,0.5)
-p2 <- seq(0.0,1,0.5)
+p1 <- seq(0.0,1,0.01)
+p2 <- seq(0.0,1,0.01)
 
 
 p_s <- expand.grid(p1,p2)
@@ -263,7 +268,7 @@ p_s <- as.matrix(p_s)
 #   outp <- array( dim=c(  length(diff.eps), length(diff.vacc[,1]), length(time)-200, k + 1 ) )
 # Time is time after vaccination onset, and at the end (last dimension of output) is prev k1, prevk2 and prev overall
 #   
-timeseq <- c(250)
+timeseq <- c(351)
 
 diff.vacc <- p_s
 
@@ -297,77 +302,160 @@ for(y in 1:length(diff.eps)){
 
 outp1 <- outp
 
-#put matrix together for the wanted mixing scenario (a= 1.0 or b=0.6)
-otp1 <- outp1[ 1, ,]
-otp2 <- cbind(p_s, otp1)
-two_k_eps1 <- as.data.frame(otp2)
 
-otp1 <- outp1[ 2, ,]
-otp2 <- cbind(p_s, otp1)
-two_k_eps06 <- as.data.frame(otp2)
+## if ubelix was used load:
+# load("outp2.Rdata")
 
-# saveRDS(outp1, "twok_diffeps_diffvaccov")
-# xt <- readRDS("twok_diffeps_diffvaccov")
+# outp1 <- outp
+
+#Choose the different vaccination coverages you want for each cantons
+p1 <- seq(0.0,1,0.01)
+p2 <- seq(0.0,1,0.01)
+
+p_s <- expand.grid(p1,p2)
+p_s <- as.matrix(p_s)
+
+
+two_k_eps1[,1:2] <- round(two_k_eps1[,1:2],3)
+two_k_eps06[,1:2] <- round(two_k_eps06[,1:2],3)
+
 ### Plot a & b & c
 
 superpos <- two_k_eps1 
 
 superpos[,3] <- two_k_eps1[,3] - two_k_eps06[,3]
 
-summary(round( superpos[,3]*100,1) )
 
+two_k_eps1[,3] <- ifelse( two_k_eps1[,3] < 1e-6,  1e-6, two_k_eps1[,3] )
+two_k_eps06[,3] <- ifelse( two_k_eps06[,3] < 1e-6,  1e-6, two_k_eps06[,3] )
 
-two_k_eps1[,3] <- (round( two_k_eps1[,3]*100,1) )
-two_k_eps06[,3] <- (round( two_k_eps06[,3]*100,1) )
-superpos[,3] <- (round( superpos[,3]*100,1) )
+summary(round( superpos[,3]*100,3) )
+
+two_k_eps1[,3] <-  two_k_eps1[,3]*100 
+two_k_eps06[,3] <- two_k_eps06[,3]*100 
+superpos[,3] <-superpos[,3]*100 
+
+summary(two_k_eps1)
+summary(two_k_eps06)
+summary(superpos)
+
+two_k_eps1[which.min(superpos[,3]),]
+two_k_eps06[which.min(superpos[,3]),]
+
+summary((superpos[,3]>0))
+h <- hist(superpos[,3])
 
 
 heatcols <- heat.colors(7)
 cv <- colorRampPalette(c("wheat", "orangered4"))( 7)
 cv2 <- colorRampPalette(c("white", "orangered4"))( 12) 
+cv4 <- colorRampPalette(c("white", "orangered4"))( 13) 
+cv3 <- colorRampPalette(c("white", "orangered4"))( 14) 
 
 p1 <- ggplot(two_k_eps1, aes(x = Var1, y = Var2))   +
-  geom_tile(aes(fill=cut(V3, breaks=c(0,.5,1,1.5,2,2.5,3,3.5), include.lowest=TRUE ))) + 
+  geom_tile(aes(fill=cut(otp1, breaks=c(1e-7, 0.5,1,1.5,2,2.5,3,3.5), include.lowest=TRUE ))) + 
   xlab("vaccination coverage in population 2")+
   ylab("vaccination coverage in population 1")+
   coord_equal()+
   scale_fill_manual(values= cv ,  
-                    name="HPV-16 \nprevalence (%)\n", 
-                    labels=c("0.0-0.5", "0.5-1.0", "1.0-1.5","1.5-2.0", "2.0-2.5", "2.5-3.0", "3.0-3.5") )
+                    name="HPV-16 \nprevalence (%)\n" ,labels=list(expression(paste("0.0", ""-"",0.5)), expression(paste(0.5,""-"","1.0")), 
+                                                                  expression(paste("1.0",""-"",1.5)) ,expression(paste(1.5,""-"","2.0")),
+                                                                  expression(paste("2.0",""-"",2.5)), expression(paste(2.5,""-"","3.0")), 
+                                                                  expression(paste("3.0",""-"",3.5)) ))
 
-p2 <- ggplot(two_k_eps06, aes(x = Var1, y = Var2))   +
-  geom_tile(aes(fill=cut(V3, breaks=c(0,.5,1,1.5,2,2.5,3,3.5), include.lowest=TRUE ))) + 
+
+
+cv <- c("white", cv)
+
+p1 <- ggplot(two_k_eps1, aes(x = Var1, y = Var2))   +
+  geom_tile(aes(fill=cut(otp1, breaks=c(-1e-30, 1e-7, 0.5,1,1.5,2,2.5,3,3.5), include.lowest=TRUE ))) + 
   xlab("vaccination coverage in population 2")+
   ylab("vaccination coverage in population 1")+
   coord_equal()+
   scale_fill_manual(values= cv ,  
-                    name="HPV-16 \nprevalence (%)\n", 
-                    labels=c("0.0-0.5", "0.5-1.0", "1.0-1.5","1.5-2.0", "2.0-2.5", "2.5-3.0", "3.0-3.5") )
+                    name="HPV-16 \nprevalence (%)\n" ,labels=list(expression(paste("0.0")),
+                                                                  expression(paste("0.0", ""-"",0.5)), expression(paste(0.5,""-"","1.0")), 
+                                                                  expression(paste("1.0",""-"",1.5)) ,expression(paste(1.5,""-"","2.0")),
+                                                                  expression(paste("2.0",""-"",2.5)), expression(paste(2.5,""-"","3.0")), 
+                                                                  expression(paste("3.0",""-"",3.5)) ))
+
+
+##short term
+p2 <- ggplot(two_k_eps06, aes(x = Var1, y = Var2))   +
+  geom_tile(aes(fill=cut(otp1, breaks=c(0,.5,1,1.5,2,2.5,3,3.5), include.lowest=TRUE ))) + 
+  xlab("vaccination coverage in population 2")+
+  ylab("vaccination coverage in population 1")+
+  coord_equal()+
+  scale_fill_manual(values= cv ,  
+                    name="HPV-16 \nprevalence (%)\n",
+                    labels=list(expression(paste("0.0", ""-"",0.5)), expression(paste(0.5,""-"","1.0")), 
+                                expression(paste("1.0",""-"",1.5)) ,expression(paste(1.5,""-"","2.0")),
+                                expression(paste("2.0",""-"",2.5)), expression(paste(2.5,""-"","3.0")), 
+                                expression(paste("3.0",""-"",3.5)) ))
+
+
+##long term
+p2 <- ggplot(two_k_eps06, aes(x = Var1, y = Var2))   +
+  geom_tile(aes(fill=cut(otp1, breaks=c(-1e-30, 1e-7, 0.5,1,1.5,2,2.5,3,3.5), include.lowest=TRUE ))) + 
+  xlab("vaccination coverage in population 2")+
+  ylab("vaccination coverage in population 1")+
+  coord_equal()+
+  scale_fill_manual(values= cv ,  
+                    name="HPV-16 \nprevalence (%)\n",
+                    labels=list(expression(paste("0.0")),
+                                expression(paste("0.0", ""-"",0.5)), expression(paste(0.5,""-"","1.0")), 
+                                expression(paste("1.0",""-"",1.5)) ,expression(paste(1.5,""-"","2.0")),
+                                expression(paste("2.0",""-"",2.5)), expression(paste(2.5,""-"","3.0")), 
+                                expression(paste("3.0",""-"",3.5)) ))
+
+
+cv3 <- colorRampPalette(c("white", "orangered4"))( 13) 
+cv3 <- c(rgb( 230, 230, 230, alpha=255, max=255), cv3)
+
+
+#replace all negative prevalence difference from vacciantion coverage higher than 0.5% with 0
+temp <- superpos[which(superpos[,1]>0.45 & superpos[,2]>0.45  & superpos[,1]!= superpos[,2] ), ]
+summary(temp)
+superpos[which(superpos[,1]>0.45 & superpos[,2]>0.45 & superpos[,1]!= superpos[,2] ), 3] <- 2e-7
+
+
+temp <- superpos[which(superpos[,1]== superpos[,2] ), ]
+summary(temp)
+
+
+superpos[which(superpos[,1]==1 & superpos[,2]==1 ), 3] <- 0
+
+cv3 <- colorRampPalette(c("white", "orangered4"))( 9) 
+cv3 <- c("lightgrey", cv3)
+cv3 <- c(rgb( 230, 230, 230, alpha=255, max=255), cv3)
 
 p3d <- ggplot(superpos, aes(x = Var1, y = Var2))   +
-  geom_tile(aes(fill=cut(V3, breaks=c(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2),
-                         include.lowest=TRUE ))) + 
+  geom_tile(aes(fill=cut(otp1, breaks=c(-1e-4,-1e-7, 1e-7, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2),
+                         include.lowest=TRUE ))) +
   xlab("vaccination coverage in population 2")+
   ylab("vaccination coverage in population 1")+
   coord_equal()+
-  scale_fill_manual(values= cv2 ,  
-                    name= expression(paste(Delta, " prevalence" )), 
-                    labels=c("0.0-0.1", "0.1-0.2", "0.2-0.3","0.3-0.4", "0.4-0.5", 
-                             "0.5-0.6", "0.6-0.7", "0.7-0.8", "0.8-0.9", "0.9-1.0",
-                             "1.0-1.1", "1.1-1.2") )
+  scale_fill_manual(values= cv3 ,
+                    name= expression(paste(Delta, " prevalence" )) ,
+                    labels=list( expression(paste("-1", ""%.%"", 10^-4, ""-"",0 )) , expression(paste("0" )) , 
+                                 expression(paste(0, -"", 0.1)) , expression(0.1-0.2), expression(0.2-0.3),
+                                 expression(0.3-0.4), expression(0.4-0.5),
+                                 expression(0.5-0.6), expression(0.6-0.7), expression(0.7-0.8), expression(0.8-0.9),
+                                 expression(paste(0.9,""-"","1.0")), expression(paste("1.0",""-"",1.1)), expression(1.1-1.2) ) )
+
 
 p1 
 p2 
-p3d 
+p3d  
 
 require("cowplot")
 lp <- list(p1 + custom6, p2 + custom6, p3d +  custom6 )
 
-# pdf("allthree2cantonsplot.pdf", width=9, height=22)
+pdf("allthree2cantonsplot_after15yv_20171005.pdf", width=9, height=22)
+
 plot_grid(plotlist=lp, align="v", nrow=3, ncol=1, labels=c("a)", "b)", "c)"), label_size= 25)
+
 dev.off()
-
-
 
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 2.
 
@@ -389,7 +477,7 @@ dev.off()
 k <- 26
 
 #run the parameters script and models over again
-source("N_01_params.R") # N_01_params runs the parameters of the model
+source("N_01_params_rev.R") # N_01_params runs the parameters of the model
 source("N_02_models.R") # N_02_models runs the two main SIRV models: STI_1 for scenario 1&2 and STI_2 for scenario 3
 
 # run the initial vector with the right size (right k)
@@ -404,6 +492,8 @@ C <- C_ch
 
 # set mixing between population 1 for scenario 1, 0.8 for scenario 2
 intercantmix <- 0.8
+# intercantmix <- 1
+
 
 params <- c(mu=mu, omega=omega, gamma=gamma, 
             epsilon=epsilon, intercantmix=intercantmix, m=m, p=p, C=C, N=N)
@@ -411,13 +501,15 @@ params <- c(mu=mu, omega=omega, gamma=gamma,
 
 #for scenario 1 and 2: use STI_1, for scenario 3: use STI_2
 # simulation_26k<- as.data.frame(ode(init, time, STI_1, parms=params))
-simulation_26k<- as.data.frame(ode(init, time, STI_2, parms=params))
+# simulation_26k<- as.data.frame(ode(init, time, STI_2, parms=params))
+
+simulation_26k<- as.data.frame(ode(init, time, STI_1, parms=params))
 
 # output for 26 cantons AND heterogeneous mean
-mat26t199 <- outp(simulation_26k[200:216,], k)
+mat26t199 <- outp(simulation_26k[300:316,], k)
 
 # output for 1 canton (homogeneous mean)
-mat1hom <- outp(simulation_1k[200:216,], 1)
+mat1hom <- outp(simulation_1k[300:316,], 1)
 
 k <- 26
 #color vector
@@ -427,13 +519,14 @@ c1 <- c(c1, "black")
 c2 <- rep(2, k+1)
 c2 <- c(c2, 3)
 
-# pdf("HET_26cantons_scen1_15y.pdf", width=8, height=6) 
+# pdf("HET_26cantons_scen1_15y.pdf", width=8, height=6)
 # pdf("HET_26cantons_scen2_15y.pdf", width=8, height=6)
 pdf("HET_26cantons_scen3_15y.pdf", width=8, height=6)
+# pdf("HET_26cantons_scen1_15y_SAMEWEIGHT_CHn_SAMEVACCCOV.pdf", width=8, height=6)
 
 par(mar = c(5,5,3,1))
 
-plot(NA, xlim=c(0,15), ylim=c(0, 0.035),
+plot(NA, xlim=c(0,15), ylim=c(0, 0.035), # 0.035 for CH, 0.08 for UK
      xlab= "years after vaccination onset",
      ylab="HPV-16 prevalence",
      cex.lab=2, frame.plot=FALSE)
@@ -445,21 +538,25 @@ for(i in 2:28){
 lines(seq(-1,15), mat1hom[,2], col="red", lwd=3 )
 
 # add line for homogeneous vaccination with mean coverage. run from l.27-55 with p <- mp 
-legend(-0.5, 0.008, legend=c("prevalence in each individual cantons",
-                           'mean prevalence with homogeneous vaccination', 
-                           "mean prevalence with heterogeneous vaccination"), cex=1.3,
+legend(-0.5, 0.008, legend=c("prevalence in each individual cantons", #0.008 for CH. 0.015 for UK
+                             'mean prevalence with homogeneous vaccination', 
+                             "mean prevalence with heterogeneous vaccination"), cex=1.3,
        # col =c( "grey", 'red', 'black'),lwd = c(1,2,2),
        col =c( "grey", 'red', 'black'),lwd = c(2,3,3),
        lty=c(1,1,1),  bty="n")  
-# mtext( expression(bold("a)")), side=3, cex=1.5, line=+1, adj=0, at=par("usr")[1]-2.5 +0.05*diff(par("usr")[1:2] ) ) 
-# mtext( expression(bold("b)")), side=3, cex=1.5, line=+1, adj=0, at=par("usr")[1]-2.5 +0.05*diff(par("usr")[1:2] ) ) 
-mtext( expression(bold("c)")), side=3, cex=1.5, line=+1, adj=0, at=par("usr")[1]-2.5 +0.05*diff(par("usr")[1:2] ) )
+mtext( expression(bold("a)")), side=3, cex=1.5, line=+1, adj=0, at=par("usr")[1]-2.5 +0.05*diff(par("usr")[1:2] ) )
+# mtext( expression(bold("b)")), side=3, cex=1.5, line=+1, adj=0, at=par("usr")[1]-2.5 +0.05*diff(par("usr")[1:2] ) )
+# mtext( expression(bold("c)")), side=3, cex=1.5, line=+1, adj=0, at=par("usr")[1]-2.5 +0.05*diff(par("usr")[1:2] ) )
+# text(15, mat1hom[17,2], "j")
 
 
 dev.off()
 
 #select all cantons prevalences after 15y of vaccination onset,
 p15yS1 <- mat26t199[17,2:28]
+
+# p15yS1 <- dw[17,2:28]
+
 
 min(p15yS1*100)
 max(p15yS1*100)
@@ -472,6 +569,17 @@ p15yS1_meanhet*100
 p15yS1_meanhom*100
 
 
+# RBI
+( (mat26t199[1,28]*100-p15yS1_meanhom*100) - (mat26t199[1,28]*100- p15yS1_meanhet*100) ) / (mat26t199[1,28]*100- p15yS1_meanhet*100)
+
+write.csv(mat26t199, file="scen1_ch_diffw_normp.csv")
+# 
+# dw <-read.csv("scen3_ch_diffw_normp.csv")
+# dw <- dw[,2:29]
+# mat26t199 <- dw
+
+# p15yS1_meanhom <- 0.01552484
+
 ######
 ### - 3.c : Number of cantons achieving different elimination thresholds
 ######
@@ -483,10 +591,25 @@ diff.eps <- seq(0,1,0.05)
 # calculates the prevalences for each canton for all x years (according to time) for the different epsilon1 (takes time)
 p_on_eps1 <- prev.free.k_fn(diff.eps)
 
-saveRDS(p_on_eps1, "p_on_eps1")
+p_on_eps2 <- prev.free.k_fn(diff.eps)
+
+saveRDS(p_on_eps1, "p_on_eps171002")
 # xt <- readRDS("p_on_eps1")
 # xt <- p_on_eps1
 # p_on_eps1 <- xt
+dim(p_on_eps1)
+
+cbind(300:352, apply(p_on_eps1[18,1:52,],1,sum)/26)
+
+
+sum(p_on_eps1[21,18,])/26
+sum(p_on_eps1[17,17,])/26
+
+p_on_eps1[1,,1]
+
+sum(p_on_eps1[21,18,])/26
+
+p_on_eps1[21,17,2]
 
 ## plot after 15 y 
 
@@ -504,9 +627,10 @@ for ( i in 1:length(diff.tresh)){
 }
 
 ## data frame for given time and tresholds
-prev.f.k_15y <- prev.free.k_fn2(p_on_eps1, 15, diff.tresh)
+prev.f.k_15y <- prev.free.k_fn2(p_on_eps1, 16, diff.tresh)
 
-pdf("Sens_epsk_difftres15y.pdf", width=8, height=10)
+
+pdf("Sens_epsk_difftres15y_20171002.pdf", width=8, height=10)
 
 par(mar=c(5.1, 4.5, 4.1, 2.1))
 par(oma=c(10, 1, 0, 3))
@@ -529,8 +653,8 @@ for(i in 1: length(diff.tresh)){
 par(new=T)
 plot(diff.eps, prev.f.k_15y[,1,2]*100,  axes=F, xlab=NA, ylab=NA, cex=1.2, ylim=c(0,0.7), lty=2,
      type="l", col="red", lwd=4)
-axis(side=4, col="red")
-mtext(side=4, line=3, "HPV-16 prevalence in Switzerland (%)", cex=2, col="red")
+axis(side=4)
+mtext(side=4, line=3, "HPV-16 prevalence in Switzerland (%)", cex=2)
 
 
 par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(0, 0, 0, 0), new = TRUE)
@@ -554,56 +678,56 @@ oy <- 50
 
 oy <- 100
 
-oy <- c(30, 40, 50, 60, 70, 80, 90, 100)
+oy <- c(31, 41, 51, 61, 71, 81, 91, 100)
 
 for ( z in 1:length(oy)){
-####### Makes data frame
-prev.f.k_50y <- prev.free.k_fn2(p_on_eps1, oy[z], diff.tresh)
-
-## required for plots
-colv <- shadesOfGrey(length(diff.tresh))
-
-#legend
-leg <- c()
-for ( i in 1:length(diff.tresh)){
-  leg[i] <- paste("threshold of", diff.tresh[i]*100,"% RR reduction")
-}
-
-
-pdf(paste(oy[z],"y_Sens_epsk_difftres.pdf"), width=8, height=10)
-
-par(mar=c(5.1, 4.5, 4.1, 2.1))
-par(oma=c(10, 1, 0, 3))
-
-plot(NA, xlim=c(min(diff.eps), max(diff.eps)), ylim=c(0,26),
-     xlab= expression(assortativity~index~between~cantons~epsilon[k]),
-     ylab="number of cantons", 
-     #      main= "after 50 years",
-     yaxt="n" , cex.lab=2)
-
-axis(side=2, at = seq(0,26,1) )
-
-for(i in 1: length(diff.tresh)){
-  lines(diff.eps, prev.f.k_50y[,i,1],  col=colv[i], pch=16, type= "b" , cex=2 )
-}
-
-
-par(new=T)
-plot(diff.eps, prev.f.k_50y[,1,2]*100,  axes=F, xlab=NA, ylab=NA, cex=1.2, ylim=c(0,0.7), lty=2,
-     type="l", col="red", lwd=4)
-axis(side=4, col="red")
-mtext(side=4, line=3, "HPV-16 prevalence in Switzerland (%)", cex=2, col="red")
-
-
-par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(0, 0, 0, 0), new = TRUE)
-plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n")
-legend("bottom", legend=c(leg, "HPV-16 prevalence in Switzerland") , 
-       pch=c( rep(16, length(diff.tresh)), NA ), lty =c(rep(1.5, length(diff.tresh)), 2), col=c(colv, "red"), 
-       cex=1.4 , xpd = TRUE , inset=c(1,0.02), lwd= c( (rep(1,length(diff.tresh), 4)) ))
-mtext( expression(bold("b)")), side=3, cex=1.5, line=-2, adj=0 )
-
-dev.off()
-
+  ####### Makes data frame
+  prev.f.k_50y <- prev.free.k_fn2(p_on_eps1, oy[z], diff.tresh)
+  
+  ## required for plots
+  colv <- shadesOfGrey(length(diff.tresh))
+  
+  #legend
+  leg <- c()
+  for ( i in 1:length(diff.tresh)){
+    leg[i] <- paste("threshold of", diff.tresh[i]*100,"% RR reduction")
+  }
+  
+  
+  pdf(paste(oy[z]-1,"y_Sens_epsk_difftres.pdf"), width=8, height=10)
+  
+  par(mar=c(5.1, 4.5, 4.1, 2.1))
+  par(oma=c(10, 1, 0, 3))
+  
+  plot(NA, xlim=c(min(diff.eps), max(diff.eps)), ylim=c(0,26),
+       xlab= expression(assortativity~index~between~cantons~epsilon[k]),
+       ylab="number of cantons", 
+       #      main= "after 50 years",
+       yaxt="n" , cex.lab=2)
+  
+  axis(side=2, at = seq(0,26,1) )
+  
+  for(i in 1: length(diff.tresh)){
+    lines(diff.eps, prev.f.k_50y[,i,1],  col=colv[i], pch=16, type= "b" , cex=2 )
+  }
+  
+  
+  par(new=T)
+  plot(diff.eps, prev.f.k_50y[,1,2]*100,  axes=F, xlab=NA, ylab=NA, cex=1.2, ylim=c(0,0.7), lty=2,
+       type="l", col="red", lwd=4)
+  axis(side=4)
+  mtext(side=4, line=3, "HPV-16 prevalence in Switzerland (%)", cex=2)
+  
+  
+  par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(0, 0, 0, 0), new = TRUE)
+  plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n")
+  legend("bottom", legend=c(leg, "HPV-16 prevalence in Switzerland") , 
+         pch=c( rep(16, length(diff.tresh)), NA ), lty =c(rep(1.5, length(diff.tresh)), 2), col=c(colv, "red"), 
+         cex=1.4 , xpd = TRUE , inset=c(1,0.02), lwd= c( (rep(1,length(diff.tresh), 4)) ))
+  mtext( expression(bold("b)")), side=3, cex=1.5, line=-2, adj=0 )
+  
+  dev.off()
+  
 }
 
 ######

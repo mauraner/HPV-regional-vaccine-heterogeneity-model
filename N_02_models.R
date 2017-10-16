@@ -140,24 +140,26 @@ STI_1<- function(t, X, params, verbose=FALSE)
         Bhm_a <- sum(Bhm)     
       }       
       #SIRS two level equations
-      pt[i]<- ifelse(t>200, p[i], 0)
+     # pt[i]<- ifelse(t>300, p[i], 0)
+      pt[i]<-  p[i]
       #################### FOR WOMEN 
       ####LOW RISK GROUP
       #S
-      dX[(i*16)-15] <- (((1-pt[i])*mu*N[i,1])  
+      dX[(i*16)-15] <- (((1-pt[i]*ve)*mu*N[i,1])  
                         - C[i,1]*X[(i*16)-15] * Blf_a
                         - (mu*X[(i*16)-15]) + (omega*X[(i*16)-13])
                         - m*X[(i*16)-15] + m*n[i,1]*(X[(i*16)-15]+X[(i*16)-11]))
+
       #I
       dX[(i*16)-14] <-  (C[i,1]*X[(i*16)-15]* Blf_a
                          - mu*X[(i*16)-14]- gamma*X[(i*16)-14] - m*X[(i*16)-14] + m*n[i,1]*(X[(i*16)-14]+X[(i*16)-10]))
       #R
       dX[(i*16)-13] <-  (gamma*X[(i*16)-14] - mu*X[(i*16)-13] - (omega*X[(i*16)-13])- m*X[(i*16)-13] + m*n[i,1]*(X[(i*16)-13]+X[(i*16)-09]))
       #V
-      dX[(i*16)-12] <-  (pt[i]*mu*N[i,1] - mu*X[(i*16)-12] - m*X[(i*16)-12] + m*n[i,1]*(X[(i*16)-12]+X[(i*16)-08]))
+      dX[(i*16)-12] <-  (pt[i]* ve *mu*N[i,1] - mu*X[(i*16)-12] - m*X[(i*16)-12] + m*n[i,1]*(X[(i*16)-12]+X[(i*16)-08]))
       ####High RISK GROUP
       #S
-      dX[(i*16)-11] <- (((1-pt[i])*mu*N[i,2])  
+      dX[(i*16)-11] <- (((1-pt[i]*ve)*mu*N[i,2])  
                         - C[i,2]*X[(i*16)-11] * Bhf_a
                         - (mu*X[(i*16)-11]) + (omega*X[(i*16)-1])
                         - m*X[(i*16)-11] + m*n[i,2]*(X[(i*16)-15]+X[(i*16)-11]))
@@ -167,7 +169,8 @@ STI_1<- function(t, X, params, verbose=FALSE)
       #R
       dX[(i*16)-09] <-  (gamma*X[(i*16)-10] - mu*X[(i*16)-09] - (omega*X[(i*16)-09]) - m*X[(i*16)-09] + m*n[i,2]*(X[(i*16)-13]+X[(i*16)-09]))
       #V
-      dX[(i*16)-08] <-  (pt[i]*mu*N[i,2] - mu*X[(i*16)-08] - m*X[(i*16)-08] + m*n[i,2]*(X[(i*16)-12]+X[(i*16)-08]))
+      dX[(i*16)-08] <-  (pt[i]* ve *mu*N[i,2]  - mu*X[(i*16)-08] - m*X[(i*16)-08] + m*n[i,2]*(X[(i*16)-12]+X[(i*16)-08]) )
+                         
       
       #################### FOR MEN 
       ####LOW RISK GROUP
@@ -259,12 +262,12 @@ STI_2<- function(t, X, params, verbose=FALSE)
         lambdahm <-  C[i,2]* (lambdah_hh2m+lambdah_hl2m)
       }       
       #SIRS two level equations
-      pt[i]<- ifelse(t>200, p[i], 0)
+      pt[i]<- ifelse(t>300, p[i], 0)
       #  pt[i] <- p[i]
       #################### FOR WOMEN 
       ####LOW RISK GROUP
       #S
-      dX[(i*16)-15] <- (((1-pt[i])*mu*N[i,1])  
+      dX[(i*16)-15] <- (((1-pt[i]*ve)*mu*N[i,1])  
                         - X[(i*16)-15] * lambdalf
                         - (mu*X[(i*16)-15]) + (omega*X[(i*16)-13])
                         - m*X[(i*16)-15] + m*n[i,1]*(X[(i*16)-15]+X[(i*16)-11]))
@@ -274,10 +277,10 @@ STI_2<- function(t, X, params, verbose=FALSE)
       #R
       dX[(i*16)-13] <-  (gamma*X[(i*16)-14] - mu*X[(i*16)-13] - (omega*X[(i*16)-13])- m*X[(i*16)-13] + m*n[i,1]*(X[(i*16)-13]+X[(i*16)-09]))
       #V
-      dX[(i*16)-12] <-  (pt[i]*mu*N[i,1] - mu*X[(i*16)-12] - m*X[(i*16)-12] + m*n[i,1]*(X[(i*16)-12]+X[(i*16)-08]))
+      dX[(i*16)-12] <-  (pt[i]*ve *mu*N[i,1] - mu*X[(i*16)-12] - m*X[(i*16)-12] + m*n[i,1]*(X[(i*16)-12]+X[(i*16)-08]))
       ####High RISK GROUP
       #S
-      dX[(i*16)-11] <- (((1-pt[i])*mu*N[i,2])  
+      dX[(i*16)-11] <- (((1-pt[i]*ve)*mu*N[i,2])  
                         - X[(i*16)-11] * lambdahf
                         - (mu*X[(i*16)-11]) + (omega*X[(i*16)-1])
                         - m*X[(i*16)-11] + m*n[i,2]*(X[(i*16)-15]+X[(i*16)-11]))
@@ -287,7 +290,7 @@ STI_2<- function(t, X, params, verbose=FALSE)
       #R
       dX[(i*16)-09] <-  (gamma*X[(i*16)-10] - mu*X[(i*16)-09] - (omega*X[(i*16)-09]) - m*X[(i*16)-09] + m*n[i,2]*(X[(i*16)-13]+X[(i*16)-09]))
       #V
-      dX[(i*16)-08] <-  (pt[i]*mu*N[i,2] - mu*X[(i*16)-08] - m*X[(i*16)-08] + m*n[i,2]*(X[(i*16)-12]+X[(i*16)-08]))
+      dX[(i*16)-08] <-  (pt[i]*ve*mu*N[i,2] - mu*X[(i*16)-08] - m*X[(i*16)-08] + m*n[i,2]*(X[(i*16)-12]+X[(i*16)-08]))
       
       #################### FOR MEN 
       ####LOW RISK GROUP
@@ -367,7 +370,7 @@ STI_3 <- function(t, X, params, verbose=FALSE)
       #################### FOR WOMEN 
       ####LOW RISK GROUP
       #S
-      dX[(i*16)-15] <- (mu*N[i,1] -  pt[i]*X[(i*16)-15]
+      dX[(i*16)-15] <- (mu*N[i,1] -  pt[i]*ve*X[(i*16)-15]
                         - C[i,1]*X[(i*16)-15] * Blf_a
                         - (mu*X[(i*16)-15]) + (omega*X[(i*16)-13])
                         - m*X[(i*16)-15] + m*n[i,1]*(X[(i*16)-15]+X[(i*16)-11]))
@@ -377,10 +380,10 @@ STI_3 <- function(t, X, params, verbose=FALSE)
       #R
       dX[(i*16)-13] <-  (gamma*X[(i*16)-14] - mu*X[(i*16)-13] - (omega*X[(i*16)-13])- m*X[(i*16)-13] + m*n[i,1]*(X[(i*16)-13]+X[(i*16)-09]))
       #V
-      dX[(i*16)-12] <-  (pt[i]*X[(i*16)-15] - mu*X[(i*16)-12] - m*X[(i*16)-12] + m*n[i,1]*(X[(i*16)-12]+X[(i*16)-08]))
+      dX[(i*16)-12] <-  (pt[i]*ve*X[(i*16)-15] - mu*X[(i*16)-12] - m*X[(i*16)-12] + m*n[i,1]*(X[(i*16)-12]+X[(i*16)-08]))
       ####High RISK GROUP
       #S
-      dX[(i*16)-11] <- (mu*N[i,2]  - pt[i]*X[(i*16)-11]
+      dX[(i*16)-11] <- (mu*N[i,2]  - pt[i]*ve*X[(i*16)-11]
                         - C[i,2]*X[(i*16)-11] * Bhf_a
                         - (mu*X[(i*16)-11]) + (omega*X[(i*16)-1])
                         - m*X[(i*16)-11] + m*n[i,2]*(X[(i*16)-15]+X[(i*16)-11]))
@@ -390,7 +393,7 @@ STI_3 <- function(t, X, params, verbose=FALSE)
       #R
       dX[(i*16)-09] <-  (gamma*X[(i*16)-10] - mu*X[(i*16)-09] - (omega*X[(i*16)-09]) - m*X[(i*16)-09] + m*n[i,2]*(X[(i*16)-13]+X[(i*16)-09]))
       #V
-      dX[(i*16)-08] <-  (pt[i]*X[(i*16)-11] - mu*X[(i*16)-08] - m*X[(i*16)-08] + m*n[i,2]*(X[(i*16)-12]+X[(i*16)-08]))
+      dX[(i*16)-08] <-  (pt[i]*ve*X[(i*16)-11] - mu*X[(i*16)-08] - m*X[(i*16)-08] + m*n[i,2]*(X[(i*16)-12]+X[(i*16)-08]))
       
       #################### FOR MEN 
       ####LOW RISK GROUP
@@ -504,12 +507,12 @@ prev.2k.diffvaccf2 <-  function(diff.eps, diff.vacc, timeseq){
 # for different epsilon1 (different assortivity indexes)
 # takes time
 prev.free.k_fn <- function(mix){
-  outp <- array(dim=c(length(mix), length(time)-200, k ))
+  outp <- array(dim=c(length(mix), length(time)-300, k ))
   pb <- txtProgressBar(0, length(mix), style=3)
   for(i in 1:length(mix)){  
     params <- c(intercantmix=mix[i])
     simulation_A <- as.data.frame(ode(init, time, STI_1, params))
-    simulationA1 <- simulation_A[simulation_A$time>=200,]
+    simulationA1 <- simulation_A[simulation_A$time>=300,]
     kprev <- c()
     kprev_b <- c()
     kprev1 <- matrix(0,ncol=k, nrow=simulationA1$t)
@@ -517,8 +520,8 @@ prev.free.k_fn <- function(mix){
     kprev1_global <- c()
     ### only women
     for(j in 1:k){
-      kprev[j]   <- ( (simulationA1[(j*16)-14+1]+ simulationA1[(j*16)-10+1] ) )/w[j] #combines low and high infectious compartement ONLY WOMEN
-      kprev_b[j] <-  (simulationA1[ (j*16)-14+1 ]+ simulationA1[(j*16)-10+1] )
+      kprev[j]   <- ( (simulationA1[,(j*16)-14+1]+ simulationA1[,(j*16)-10+1] ) )/w[j] #combines low and high infectious compartement ONLY WOMEN
+      kprev_b[j] <-  (simulationA1[ ,(j*16)-14+1 ]+ simulationA1[,(j*16)-10+1] )
     }
     # matrix with prevalences in ind. cantons
     kprev1<- do.call(cbind, kprev)
