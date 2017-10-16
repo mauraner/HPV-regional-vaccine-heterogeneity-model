@@ -4,7 +4,7 @@ Mathematical model of HPV-16 transmission in the context of heterogeneous vaccin
 In this depository you will find the following files:
 
 1: 
-N_01_params.R : Script which codes the parameters used for the model
+N_01_params_rev.R : Script which codes the parameters used for the model
 
 It requires the following data: 
 cant_vacc_cov_pmob_ordered.csv <- cantonal/regional vaccination coverages
@@ -32,4 +32,6 @@ System representing Switzerland and it's 26 cantons.
 3.b Same as 3.a but for scenario 3 (80% of sexual contacts occur within the own canton (overall weighted average), but the 20% are distributed according to the population mobility matrix. 
 3.c Gives the number of cantons achieving certain number of relative risk reduction over different sexual mixing levels (0= completely random to 1= completely assortative) and at different time points (number of years after vaccination onset).
 3.d Migration plot or chord diagram of the cantonal interconnectivity, according to each scenario.
+
+4: Sensitivity analysis can be performed on external servers using the script files: N_03_sensitivity_analysis.R, based on the parameters described in N_01b_params_sens_analysis.R. The output can be loaded on R again using N_05_outputs_sens_analysis.R.
 
